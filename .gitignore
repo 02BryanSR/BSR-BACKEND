@@ -1,0 +1,19 @@
+# Maven
+target/
+
+# Logs
+*.log
+
+# IDE
+.metadata/
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# uploads
+uploads/
