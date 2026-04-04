@@ -8,5 +8,7 @@ public interface StorageService {
 
     String storeCategoryImage(MultipartFile file);
 
+    String normalizeManagedPublicPath(String publicPath);
+
     void deleteIfManaged(String publicPath);
 }

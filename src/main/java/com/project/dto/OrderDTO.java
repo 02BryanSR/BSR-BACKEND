@@ -14,6 +14,8 @@ public class OrderDTO {
 	private Integer totalAmount;
 	private BigDecimal totalPrice;
 	private String payMethod;
+	private String paymentReference;
+	private String paymentStatus;
 	private LocalDateTime createDate;
 	private LocalDateTime updateDate;
 	private Long customerId;
@@ -25,13 +27,15 @@ public class OrderDTO {
 	}
 
 	public OrderDTO(Long id, String status, Integer totalAmount, BigDecimal totalPrice, String payMethod,
-			LocalDateTime createDate, LocalDateTime updateDate, Long customerId, Long addressId,
+			String paymentReference, String paymentStatus, LocalDateTime createDate, LocalDateTime updateDate, Long customerId, Long addressId,
 			List<Long> orderDetailIds) {
 		this.id = id;
 		this.status = status;
 		this.totalAmount = totalAmount;
 		this.totalPrice = totalPrice;
 		this.payMethod = payMethod;
+		this.paymentReference = paymentReference;
+		this.paymentStatus = paymentStatus;
 		this.createDate = createDate;
 		this.updateDate = updateDate;
 		this.customerId = customerId;
@@ -77,6 +81,22 @@ public class OrderDTO {
 
 	public void setPayMethod(String payMethod) {
 		this.payMethod = payMethod;
+	}
+
+	public String getPaymentReference() {
+		return paymentReference;
+	}
+
+	public void setPaymentReference(String paymentReference) {
+		this.paymentReference = paymentReference;
+	}
+
+	public String getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(String paymentStatus) {
+		this.paymentStatus = paymentStatus;
 	}
 
 	public LocalDateTime getCreateDate() {

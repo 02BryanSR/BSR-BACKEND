@@ -42,9 +42,20 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable()).cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint).accessDeniedHandler(deniedHandler))
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-						.requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/uploads/**").permitAll()
-						.anyRequest().authenticated());
+				.authorizeHttpRequests(auth -> auth
+					    .requestMatchers(
+					        "/api/auth/login",
+					        "/api/auth/register",
+					        "/api/auth/forgot-password",
+					        "/api/auth/reset-password",
+					        "/api/payments/webhook",
+					        "/v3/api-docs/**",
+			                "/swagger-ui/**",
+			                "/swagger-ui.html"
+					    ).permitAll()
+					    .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/uploads/**").permitAll()
+					    .anyRequest().authenticated()
+					);
 
 		http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

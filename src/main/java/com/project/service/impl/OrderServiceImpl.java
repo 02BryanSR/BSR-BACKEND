@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.project.dto.CreateOrderRequestDTO;
@@ -22,6 +24,7 @@ import com.project.repository.CartItemRepository;
 import com.project.repository.CustomerRepository;
 import com.project.repository.OrderDetailRepository;
 import com.project.repository.OrderRepository;
+import com.project.service.EmailService;
 import com.project.service.OrderService;
 
 import jakarta.transaction.Transactional;
@@ -30,12 +33,15 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OrderServiceImpl.class);
+
     private final OrderRepository repo;
     private final OrderMapper mapper;
     private final CustomerRepository customerRepo;
     private final AddressRepository addressRepo;
     private final CartItemRepository cartItemRepo;
     private final OrderDetailRepository orderDetailRepo;
+    private final EmailService emailService;
 
     public OrderServiceImpl(
             OrderRepository repo,
@@ -43,13 +49,15 @@ public class OrderServiceImpl implements OrderService {
             CustomerRepository customerRepo,
             AddressRepository addressRepo,
             CartItemRepository cartItemRepo,
-            OrderDetailRepository orderDetailRepo) {
+            OrderDetailRepository orderDetailRepo,
+            EmailService emailService) {
         this.repo = repo;
         this.mapper = mapper;
         this.customerRepo = customerRepo;
         this.addressRepo = addressRepo;
         this.cartItemRepo = cartItemRepo;
         this.orderDetailRepo = orderDetailRepo;
+        this.emailService = emailService;
     }
 
     @Override
@@ -90,7 +98,7 @@ public class OrderServiceImpl implements OrderService {
 
         validateAddressOwnership(address, customer);
 
-        return buildOrderFromCart(customer, address, dto.getPayMethod());
+        return buildOrderFromCart(customer, address, dto.getPayMethod(), null, null);
     }
 
     @Override
@@ -141,7 +149,22 @@ public class OrderServiceImpl implements OrderService {
 
         validateAddressOwnership(address, customer);
 
-        return buildOrderFromCart(customer, address, dto.getPayMethod());
+        return buildOrderFromCart(customer, address, dto.getPayMethod(), null, null);
+    }
+
+    @Override
+    public OrderDTO createMyPaidOrder(CreateOrderRequestDTO dto, String email, String paymentReference, String paymentStatus) {
+        validateOrderRequest(dto);
+
+        CustomerEntity customer = customerRepo.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        AddressEntity address = addressRepo.findById(dto.getAddressId())
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
+        validateAddressOwnership(address, customer);
+
+        return buildOrderFromCart(customer, address, dto.getPayMethod(), paymentReference, paymentStatus);
     }
 
     private void validateOrderRequest(OrderDTO dto) {
@@ -168,7 +191,12 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private OrderDTO buildOrderFromCart(CustomerEntity customer, AddressEntity address, String payMethod) {
+    private OrderDTO buildOrderFromCart(
+            CustomerEntity customer,
+            AddressEntity address,
+            String payMethod,
+            String paymentReference,
+            String paymentStatus) {
         List<CartItemEntity> cartItems = cartItemRepo.findByCartCustomerId(customer.getId());
 
         if (cartItems.isEmpty()) {
@@ -179,6 +207,8 @@ public class OrderServiceImpl implements OrderService {
         order.setCustomer(customer);
         order.setAddress(address);
         order.setPayMethod(payMethod.trim());
+        order.setPaymentReference(paymentReference);
+        order.setPaymentStatus(paymentStatus);
         order.setStatus(OrderStatus.CREATED);
         order.setTotalAmount(0);
         order.setTotalPrice(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
@@ -227,6 +257,13 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity updatedOrder = repo.save(savedOrder);
 
         cartItemRepo.deleteAll(cartItems);
+        updatedOrder.setOrderDetails(orderDetailRepo.findByOrderId(updatedOrder.getId()));
+
+        try {
+            emailService.sendOrderConfirmationEmail(updatedOrder);
+        } catch (RuntimeException ex) {
+            LOGGER.error("Unable to send order confirmation email for order {}", updatedOrder.getId(), ex);
+        }
 
         return mapper.toDto(updatedOrder);
     }

@@ -32,6 +32,12 @@ public class OrderEntity {
 	@Column(name= "pay_method",nullable = false)
 	private String payMethod;
 
+	@Column(name = "payment_reference", unique = true)
+	private String paymentReference;
+
+	@Column(name = "payment_status")
+	private String paymentStatus;
+
 	@Column(name = "create_date", nullable = false, updatable = false)
 	private LocalDateTime createDate;
 
@@ -106,6 +112,22 @@ public class OrderEntity {
 
 	public LocalDateTime getCreateDate() {
 		return createDate;
+	}
+
+	public String getPaymentReference() {
+		return paymentReference;
+	}
+
+	public void setPaymentReference(String paymentReference) {
+		this.paymentReference = paymentReference;
+	}
+
+	public String getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(String paymentStatus) {
+		this.paymentStatus = paymentStatus;
 	}
 
 	public void setCreateDate(LocalDateTime createDate) {

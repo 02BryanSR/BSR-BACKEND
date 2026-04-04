@@ -1,6 +1,7 @@
 package com.project.service.impl;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -42,6 +43,35 @@ public class FileSystemStorageService implements StorageService {
         return storeImage(file, categoriesDir, CATEGORY_PUBLIC_PREFIX);
     }
 
+    @Override
+    public String normalizeManagedPublicPath(String publicPath) {
+        if (!StringUtils.hasText(publicPath)) {
+            return null;
+        }
+
+        String normalized = publicPath.trim();
+        if (normalized.startsWith("blob:") || normalized.startsWith("data:")) {
+            return null;
+        }
+
+        try {
+            URI uri = URI.create(normalized);
+            if (uri.isAbsolute() && uri.getPath() != null) {
+                normalized = uri.getPath();
+            }
+        } catch (IllegalArgumentException ex) {
+            // Keep the trimmed value when it is not a valid absolute URI.
+        }
+
+        normalized = stripQueryAndFragment(normalized);
+
+        if (normalized.startsWith(PRODUCT_PUBLIC_PREFIX) || normalized.startsWith(CATEGORY_PUBLIC_PREFIX)) {
+            return normalized;
+        }
+
+        return null;
+    }
+
     private String storeImage(MultipartFile file, Path targetDir, String publicPrefix) {
         if (file == null || file.isEmpty()) {
             return null;
@@ -70,11 +100,11 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public void deleteIfManaged(String publicPath) {
-        if (!StringUtils.hasText(publicPath)) {
+        String normalized = normalizeManagedPublicPath(publicPath);
+        if (!StringUtils.hasText(normalized)) {
             return;
         }
 
-        String normalized = publicPath.trim();
         Path baseDir;
         String fileName;
 
@@ -98,5 +128,21 @@ public class FileSystemStorageService implements StorageService {
         } catch (IOException ex) {
             throw new RuntimeException("Could not delete file", ex);
         }
+    }
+
+    private String stripQueryAndFragment(String value) {
+        int queryIndex = value.indexOf('?');
+        int fragmentIndex = value.indexOf('#');
+        int cutIndex = -1;
+
+        if (queryIndex >= 0) {
+            cutIndex = queryIndex;
+        }
+
+        if (fragmentIndex >= 0 && (cutIndex < 0 || fragmentIndex < cutIndex)) {
+            cutIndex = fragmentIndex;
+        }
+
+        return cutIndex >= 0 ? value.substring(0, cutIndex) : value;
     }
 }

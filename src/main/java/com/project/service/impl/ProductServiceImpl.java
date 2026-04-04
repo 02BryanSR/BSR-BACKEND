@@ -93,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
         product.setPrice(form.getPrice());
         product.setStock(resolveStock(form.getStock(), DEFAULT_STOCK));
         product.setCategory(category);
-        product.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), null));
+        product.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), form.isRemoveImage(), null));
 
         return mapper.toDto(repo.save(product));
     }
@@ -127,7 +127,7 @@ public class ProductServiceImpl implements ProductService {
         product.setStock(
                 resolveStock(form.getStock(), product.getStock() == null ? DEFAULT_STOCK : product.getStock()));
         product.setCategory(category);
-        product.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), product.getImageUrl()));
+        product.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), form.isRemoveImage(), product.getImageUrl()));
 
         return mapper.toDto(repo.save(product));
     }
@@ -163,22 +163,38 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private String resolveImageUrl(String requestedImageUrl, org.springframework.web.multipart.MultipartFile image,
-            String currentImageUrl) {
+            boolean removeImage, String currentImageUrl) {
+        String normalizedCurrentImageUrl = normalizeComparableImageUrl(currentImageUrl);
+
         if (image != null && !image.isEmpty()) {
             storageService.deleteIfManaged(currentImageUrl);
             return storageService.storeProductImage(image);
         }
 
         if (requestedImageUrl != null && !requestedImageUrl.isBlank()) {
-            String normalized = requestedImageUrl.trim();
+            String normalized = normalizeComparableImageUrl(requestedImageUrl);
 
-            if (!normalized.equals(currentImageUrl)) {
+            if (!normalized.equals(normalizedCurrentImageUrl)) {
                 storageService.deleteIfManaged(currentImageUrl);
             }
             return normalized;
         }
 
-        return currentImageUrl;
+        if (removeImage) {
+            storageService.deleteIfManaged(currentImageUrl);
+            return null;
+        }
+
+        return normalizedCurrentImageUrl;
+    }
+
+    private String normalizeComparableImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return null;
+        }
+
+        String normalizedManagedPath = storageService.normalizeManagedPublicPath(imageUrl);
+        return normalizedManagedPath != null ? normalizedManagedPath : imageUrl.trim();
     }
 
     private String normalizeSku(String sku) {

@@ -53,8 +53,16 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerDTO findByEmailIgnoreCase(String email) {
-        CustomerEntity customer = repo.findByEmailIgnoreCase(email)
+        String normalizedEmail = normalizeEmail(email);
+
+        System.out.println("EMAIL RECIBIDO EN SERVICE: [" + email + "]");
+        System.out.println("EMAIL NORMALIZADO: [" + normalizedEmail + "]");
+
+        CustomerEntity customer = repo.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        System.out.println("CLIENTE ENCONTRADO: " + customer.getEmail());
+
         return mapper.toDto(customer);
     }
 

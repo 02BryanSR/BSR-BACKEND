@@ -24,4 +24,14 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<String> handleGeneral(Exception ex) {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error occurred");
 	}
+	
+	@ExceptionHandler(EmailNotFoundException.class)
+	public ResponseEntity<String> handleEmailNotFound(EmailNotFoundException ex) {
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+	}
+
+	@ExceptionHandler(InvalidResetTokenException.class)
+	public ResponseEntity<String> handleInvalidResetToken(InvalidResetTokenException ex) {
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+	}
 }

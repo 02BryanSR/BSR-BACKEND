@@ -60,7 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
         CategoryEntity category = mapper.toEntity(dto);
         category.setName(normalizedName);
         category.setDescription(form.getDescription().trim());
-        category.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), null));
+        category.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), form.isRemoveImage(), null));
 
         CategoryEntity saved = repo.save(category);
         return mapper.toDto(saved);
@@ -86,7 +86,8 @@ public class CategoryServiceImpl implements CategoryService {
             categoryFound.setDescription(form.getDescription().trim());
         }
 
-        categoryFound.setImageUrl(resolveImageUrl(form.getImageUrl(), form.getImage(), categoryFound.getImageUrl()));
+        categoryFound.setImageUrl(
+                resolveImageUrl(form.getImageUrl(), form.getImage(), form.isRemoveImage(), categoryFound.getImageUrl()));
 
         CategoryEntity saved = repo.save(categoryFound);
         return mapper.toDto(saved);
@@ -113,21 +114,37 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private String resolveImageUrl(String requestedImageUrl, org.springframework.web.multipart.MultipartFile image,
-            String currentImageUrl) {
+            boolean removeImage, String currentImageUrl) {
+        String normalizedCurrentImageUrl = normalizeComparableImageUrl(currentImageUrl);
+
         if (image != null && !image.isEmpty()) {
             storageService.deleteIfManaged(currentImageUrl);
             return storageService.storeCategoryImage(image);
         }
 
         if (requestedImageUrl != null && !requestedImageUrl.isBlank()) {
-            String normalized = requestedImageUrl.trim();
+            String normalized = normalizeComparableImageUrl(requestedImageUrl);
 
-            if (!normalized.equals(currentImageUrl)) {
+            if (!normalized.equals(normalizedCurrentImageUrl)) {
                 storageService.deleteIfManaged(currentImageUrl);
             }
             return normalized;
         }
 
-        return currentImageUrl;
+        if (removeImage) {
+            storageService.deleteIfManaged(currentImageUrl);
+            return null;
+        }
+
+        return normalizedCurrentImageUrl;
+    }
+
+    private String normalizeComparableImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return null;
+        }
+
+        String normalizedManagedPath = storageService.normalizeManagedPublicPath(imageUrl);
+        return normalizedManagedPath != null ? normalizedManagedPath : imageUrl.trim();
     }
 }

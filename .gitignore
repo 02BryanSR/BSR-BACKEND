@@ -1,19 +1,32 @@
-# Maven
+# Maven / Build
 target/
+out/
 
 # Logs
 *.log
 
-# IDE
+# Archivos sensibles
+src/main/resources/application-local.properties
+
+# IDEs
 .metadata/
 .settings/
 .classpath
 .project
 .factorypath
+.idea/
+.vscode/
 
-# OS
+# Sistema operativo
 .DS_Store
 Thumbs.db
 
-# uploads
+# Archivos generados / runtime
 uploads/
+
+# Java
+*.class
+
+# Node / Frontend (por si usas Angular)
+node_modules/
+dist/

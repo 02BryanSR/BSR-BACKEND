@@ -1,6 +1,7 @@
 package com.project.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,4 +15,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 	List<OrderEntity> findByCustomerId(Long customerId);
 
 	List<OrderEntity> findByStatus(OrderStatus status);
+
+	Optional<OrderEntity> findByPaymentReference(String paymentReference);
 }

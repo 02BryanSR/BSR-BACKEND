@@ -25,4 +25,6 @@ public interface OrderService {
     OrderDTO findMyOrderById(Long orderId, String email);
 
     OrderDTO createMyOrder(CreateOrderRequestDTO dto, String email);
+
+    OrderDTO createMyPaidOrder(CreateOrderRequestDTO dto, String email, String paymentReference, String paymentStatus);
 }
