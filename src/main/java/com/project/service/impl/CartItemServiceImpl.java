@@ -52,7 +52,7 @@ public class CartItemServiceImpl implements CartItemService {
 	}
 
 	@Override
-	public CartItemDTO upsertCartItem(Long cartId, Long productId, Integer quantity) {
+	public CartItemDTO upsertCartItem(Long cartId, Long productId, Integer quantity, String size) {
 
 		if (cartId == null || productId == null) {
 			throw new RuntimeException("cartId and productId are required");
@@ -63,7 +63,8 @@ public class CartItemServiceImpl implements CartItemService {
 
 		CartEntity cart = cartRepo.findById(cartId).orElseThrow(() -> new RuntimeException("Cart not found"));
 
-		CartItemEntity item = itemRepo.findByCartIdAndProductId(cartId, productId).orElse(null);
+		String normalizedSize = normalizeSize(size);
+		CartItemEntity item = itemRepo.findByCartIdAndProductIdAndSize(cartId, productId, normalizedSize).orElse(null);
 
 		if (quantity == 0) {
 			if (item == null) {
@@ -74,6 +75,7 @@ public class CartItemServiceImpl implements CartItemService {
 			CartItemDTO deleted = new CartItemDTO();
 			deleted.setId(item.getId());
 			deleted.setQuantity(0);
+			deleted.setSize(toResponseSize(item.getSize()));
 			return deleted;
 		}
 		ProductEntity product = productRepo.findById(productId)
@@ -87,6 +89,7 @@ public class CartItemServiceImpl implements CartItemService {
 			item = new CartItemEntity();
 			item.setCart(cart);
 			item.setProduct(product);
+			item.setSize(normalizedSize);
 		}
 
 		item.setQuantity(quantity);
@@ -112,6 +115,15 @@ public class CartItemServiceImpl implements CartItemService {
 		List<CartItemEntity> items = itemRepo.findByCartId(cartId);
 		items.forEach(item -> itemRepo.delete(item));
 		return "Cart successfully removed ";
+	}
+
+	private String normalizeSize(String size) {
+		return size == null ? "" : size.trim();
+	}
+
+	private String toResponseSize(String size) {
+		String normalizedSize = normalizeSize(size);
+		return normalizedSize.isEmpty() ? null : normalizedSize;
 	}
 
 }

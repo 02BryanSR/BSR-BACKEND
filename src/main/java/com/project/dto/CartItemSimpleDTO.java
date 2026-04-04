@@ -4,13 +4,23 @@ import java.math.BigDecimal;
 
 public class CartItemSimpleDTO {
 
+	private Long id;
 	private Long productId;
 	private String productName;
+	private String size;
 	private BigDecimal price;
 	private Integer quantity;
 	private BigDecimal subtotal;
 
 	public CartItemSimpleDTO() {
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public Long getProductId() {
@@ -27,6 +37,14 @@ public class CartItemSimpleDTO {
 
 	public void setProductName(String productName) {
 		this.productName = productName;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
 	}
 
 	public BigDecimal getPrice() {

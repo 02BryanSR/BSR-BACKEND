@@ -10,13 +10,14 @@ public class CartItemDTO {
 	private LocalDateTime updateDate;
 	private Long cartId;
 	private Long productId;
+	private String size;
 
 	public CartItemDTO() {
 
 	}
 
 	public CartItemDTO(Long id, Integer quantity, LocalDateTime createDate, LocalDateTime updateDate, Long cartId,
-			Long productId) {
+			Long productId, String size) {
 
 		this.id = id;
 		this.quantity = quantity;
@@ -24,6 +25,7 @@ public class CartItemDTO {
 		this.updateDate = updateDate;
 		this.cartId = cartId;
 		this.productId = productId;
+		this.size = size;
 	}
 
 	public Long getId() {
@@ -72,6 +74,14 @@ public class CartItemDTO {
 
 	public void setProductId(Long productId) {
 		this.productId = productId;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
 	}
 
 }

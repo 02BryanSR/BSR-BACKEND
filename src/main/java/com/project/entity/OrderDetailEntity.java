@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
 @Entity
-@Table(name = "order_details", uniqueConstraints = @UniqueConstraint(columnNames = { "order_id", "product_id" }))
+@Table(name = "order_details", uniqueConstraints = @UniqueConstraint(columnNames = { "order_id", "product_id", "size" }))
 public class OrderDetailEntity {
 
 	@Id
@@ -21,6 +21,9 @@ public class OrderDetailEntity {
 	@Positive
 	@Column(name = "price_unit", nullable = false)
 	private BigDecimal priceUnit;
+
+	@Column(name = "size", nullable = false, length = 40, columnDefinition = "varchar(40) not null default ''")
+	private String size = "";
 
 	@Column(name = "create_date", nullable = false, updatable = false)
 	private LocalDateTime createDate;
@@ -53,11 +56,12 @@ public class OrderDetailEntity {
 	}
 
 	public OrderDetailEntity(Long id, @NotNull @Positive Integer quantity, @NotNull @Positive BigDecimal priceUnit,
-			LocalDateTime createDate, LocalDateTime updateDate, OrderEntity order, ProductEntity product) {
+			String size, LocalDateTime createDate, LocalDateTime updateDate, OrderEntity order, ProductEntity product) {
 
 		this.id = id;
 		this.quantity = quantity;
 		this.priceUnit = priceUnit;
+		setSize(size);
 		this.createDate = createDate;
 		this.updateDate = updateDate;
 		this.order = order;
@@ -86,6 +90,14 @@ public class OrderDetailEntity {
 
 	public void setPriceUnit(BigDecimal priceUnit) {
 		this.priceUnit = priceUnit;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size == null ? "" : size.trim();
 	}
 
 	public LocalDateTime getCreateDate() {

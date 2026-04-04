@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Positive;
 
 @Entity
-@Table(name = "cart_items", uniqueConstraints = @UniqueConstraint(columnNames = { "cart_id", "product_id" }))
+@Table(name = "cart_items", uniqueConstraints = @UniqueConstraint(columnNames = { "cart_id", "product_id", "size" }))
 public class CartItemEntity {
 
 	@Id
@@ -15,6 +15,9 @@ public class CartItemEntity {
 	@Column(nullable = false)
 	@Positive
 	private Integer quantity;
+
+	@Column(name = "size", nullable = false, length = 40, columnDefinition = "varchar(40) not null default ''")
+	private String size = "";
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "cart_id", nullable = false)
@@ -45,13 +48,14 @@ public class CartItemEntity {
 
 	}
 
-	public CartItemEntity(Long id, CartEntity cart, ProductEntity product, Integer quantity, LocalDateTime createDate,
-			LocalDateTime updateDate) {
+	public CartItemEntity(Long id, CartEntity cart, ProductEntity product, Integer quantity, String size,
+			LocalDateTime createDate, LocalDateTime updateDate) {
 
 		this.id = id;
 		this.cart = cart;
 		this.product = product;
 		this.quantity = quantity;
+		setSize(size);
 		this.createDate = createDate;
 		this.updateDate = updateDate;
 	}
@@ -86,6 +90,14 @@ public class CartItemEntity {
 
 	public void setQuantity(Integer quantity) {
 		this.quantity = quantity;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size == null ? "" : size.trim();
 	}
 
 	public LocalDateTime getCreateDate() {

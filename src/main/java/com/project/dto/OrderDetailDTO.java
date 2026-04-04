@@ -12,13 +12,14 @@ public class OrderDetailDTO {
 	private LocalDateTime updateDate;
 	private Long orderId;
 	private Long productId;
+	private String size;
 
 	public OrderDetailDTO() {
 
 	}
 
 	public OrderDetailDTO(Long id, Integer quantity, BigDecimal priceUnit, LocalDateTime createDate,
-			LocalDateTime updateDate, Long orderId, Long productId) {
+			LocalDateTime updateDate, Long orderId, Long productId, String size) {
 
 		this.id = id;
 		this.quantity = quantity;
@@ -27,6 +28,7 @@ public class OrderDetailDTO {
 		this.updateDate = updateDate;
 		this.orderId = orderId;
 		this.productId = productId;
+		this.size = size;
 	}
 
 	public Long getId() {
@@ -83,6 +85,14 @@ public class OrderDetailDTO {
 
 	public void setProductId(Long productId) {
 		this.productId = productId;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
 	}
 
 }

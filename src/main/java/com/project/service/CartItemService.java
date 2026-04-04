@@ -10,7 +10,7 @@ public interface CartItemService {
 
 	List<CartItemDTO> findByCartId(Long cartId);
 
-	CartItemDTO upsertCartItem(Long cartId, Long productId, Integer quantity);
+	CartItemDTO upsertCartItem(Long cartId, Long productId, Integer quantity, String size);
 
 	String deleteCartItem(Long id); //vaciar por item
 

@@ -29,27 +29,28 @@ public class CartController {
     public ResponseEntity<CartResponseDTO> addItemToMyCart(
             Authentication auth,
             @RequestParam Long productId,
-            @RequestParam Integer quantity) {
-        service.addItemToMyCart(auth.getName(), productId, quantity);
+            @RequestParam Integer quantity,
+            @RequestParam(required = false) String size) {
+        service.addItemToMyCart(auth.getName(), productId, quantity, size);
         return ResponseEntity.ok(service.getMyCart(auth.getName()));
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/me/items/{productId}")
+    @PutMapping("/me/items/{itemId}")
     public ResponseEntity<CartResponseDTO> updateMyItemQuantity(
             Authentication auth,
-            @PathVariable Long productId,
+            @PathVariable Long itemId,
             @RequestParam Integer quantity) {
-        service.updateMyItemQuantity(auth.getName(), productId, quantity);
+        service.updateMyItemQuantity(auth.getName(), itemId, quantity);
         return ResponseEntity.ok(service.getMyCart(auth.getName()));
     }
 
     @PreAuthorize("isAuthenticated()")
-    @DeleteMapping("/me/items/{productId}")
+    @DeleteMapping("/me/items/{itemId}")
     public ResponseEntity<CartResponseDTO> removeMyItem(
             Authentication auth,
-            @PathVariable Long productId) {
-        service.removeMyItem(auth.getName(), productId);
+            @PathVariable Long itemId) {
+        service.removeMyItem(auth.getName(), itemId);
         return ResponseEntity.ok(service.getMyCart(auth.getName()));
     }
 

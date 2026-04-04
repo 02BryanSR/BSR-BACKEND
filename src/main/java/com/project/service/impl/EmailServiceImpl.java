@@ -116,7 +116,7 @@ public class EmailServiceImpl implements EmailService {
                         <tr>
                           <td style="padding:14px 0;border-bottom:1px solid #ece7df;color:#171717;font-size:14px;">
                             <div style="font-weight:600;">%s</div>
-                            <div style="margin-top:4px;color:#6b6b6b;font-size:13px;">Cantidad: %s</div>
+                            <div style="margin-top:4px;color:#6b6b6b;font-size:13px;">%s</div>
                           </td>
                           <td style="padding:14px 0;border-bottom:1px solid #ece7df;color:#171717;font-size:14px;text-align:right;font-weight:600;">
                             %s
@@ -124,7 +124,7 @@ public class EmailServiceImpl implements EmailService {
                         </tr>
                         """.formatted(
                         escapeHtml(detail.getProduct().getName()),
-                        detail.getQuantity(),
+                        escapeHtml(buildOrderLineMeta(detail)),
                         escapeHtml(formatLineTotal(detail))));
             }
         }
@@ -239,6 +239,16 @@ public class EmailServiceImpl implements EmailService {
 
     private String formatLineTotal(OrderDetailEntity detail) {
         return formatMoney(detail.getPriceUnit().multiply(BigDecimal.valueOf(detail.getQuantity())));
+    }
+
+    private String buildOrderLineMeta(OrderDetailEntity detail) {
+        String size = detail.getSize() == null ? "" : detail.getSize().trim();
+
+        if (size.isEmpty()) {
+            return "Cantidad: " + detail.getQuantity();
+        }
+
+        return "Cantidad: " + detail.getQuantity() + " | Talla: " + size;
     }
 
     private String formatMoney(BigDecimal value) {
