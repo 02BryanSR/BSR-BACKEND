@@ -1,5 +1,6 @@
 package com.project.security.config;
 
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
@@ -28,6 +29,9 @@ public class SecurityConfig {
 
 	@Value("${app.security.cors.allowed-origins:http://localhost:4200}")
 	private String allowedOrigins;
+
+	@Value("${app.security.cors.allowed-origin-patterns:http://192.168.*:4200,http://10.*:4200,http://172.*:4200}")
+	private String allowedOriginPatterns;
 
 	public SecurityConfig(JwtAuthenticationFilter jwtFilter, RestAuthenticationEntryPoint entryPoint,
 			RestAccessDeniedHandler deniedHandler) {
@@ -75,7 +79,17 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+		List<String> resolvedOrigins = splitCsv(allowedOrigins);
+		List<String> resolvedOriginPatterns = splitCsv(allowedOriginPatterns);
+
+		if (!resolvedOrigins.isEmpty()) {
+			config.setAllowedOrigins(resolvedOrigins);
+		}
+
+		if (!resolvedOriginPatterns.isEmpty()) {
+			config.setAllowedOriginPatterns(resolvedOriginPatterns);
+		}
+
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		config.setExposedHeaders(List.of("Authorization"));
@@ -84,5 +98,12 @@ public class SecurityConfig {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);
 		return source;
+	}
+
+	private List<String> splitCsv(String value) {
+		return Arrays.stream(value.split(","))
+				.map(String::trim)
+				.filter(entry -> !entry.isBlank())
+				.toList();
 	}
 }
