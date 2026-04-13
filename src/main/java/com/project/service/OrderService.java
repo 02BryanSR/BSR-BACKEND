@@ -24,6 +24,10 @@ public interface OrderService {
 
     OrderDTO findMyOrderById(Long orderId, String email);
 
+    byte[] getMyOrderInvoice(Long orderId, String email);
+
+    String getInvoiceFilename(Long orderId);
+
     OrderDTO createMyOrder(CreateOrderRequestDTO dto, String email);
 
     OrderDTO createMyPaidOrder(CreateOrderRequestDTO dto, String email, String paymentReference, String paymentStatus);

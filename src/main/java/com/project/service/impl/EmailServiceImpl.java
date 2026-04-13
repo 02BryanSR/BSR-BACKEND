@@ -6,7 +6,9 @@ import java.time.format.DateTimeFormatter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -16,6 +18,7 @@ import com.project.entity.AddressEntity;
 import com.project.entity.OrderDetailEntity;
 import com.project.entity.OrderEntity;
 import com.project.service.EmailService;
+import com.project.service.InvoiceService;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -27,12 +30,14 @@ public class EmailServiceImpl implements EmailService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailServiceImpl.class);
 
     private final JavaMailSender mailSender;
+    private final InvoiceService invoiceService;
 
-    @Value("${app.mail.from}")
+    @Value("${app.mail.from:${spring.mail.username:no-reply@bsr.local}}")
     private String from;
 
-    public EmailServiceImpl(JavaMailSender mailSender) {
+    public EmailServiceImpl(JavaMailSender mailSender, InvoiceService invoiceService) {
         this.mailSender = mailSender;
+        this.invoiceService = invoiceService;
     }
 
     @Override
@@ -48,18 +53,35 @@ public class EmailServiceImpl implements EmailService {
         }
 
         String subject = "Confirmacion de pedido #" + order.getId();
-        sendHtmlEmail(order.getCustomer().getEmail(), subject, buildOrderConfirmationHtml(order));
+        sendHtmlEmail(
+                order.getCustomer().getEmail(),
+                subject,
+                buildOrderConfirmationHtml(order),
+                invoiceService.buildInvoiceFilename(order.getId()),
+                invoiceService.generateInvoicePdf(order));
     }
 
     private void sendHtmlEmail(String to, String subject, String html) {
+        sendHtmlEmail(to, subject, html, null, null);
+    }
+
+    private void sendHtmlEmail(String to, String subject, String html, String attachmentName, byte[] attachmentBytes) {
         try {
             LOGGER.info("Sending email with Resend SMTP. From={} To={} Subject={}", from, to, subject);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             helper.setFrom(from);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
+
+            if (attachmentName != null && attachmentBytes != null && attachmentBytes.length > 0) {
+                helper.addAttachment(
+                        attachmentName,
+                        new ByteArrayResource(attachmentBytes),
+                        MediaType.APPLICATION_PDF_VALUE);
+            }
+
             mailSender.send(mimeMessage);
             LOGGER.info("Email accepted by SMTP client for recipient {}", to);
         } catch (MailException | MessagingException ex) {
@@ -173,7 +195,7 @@ public class EmailServiceImpl implements EmailService {
                         </div>
 
                         <p style="margin:24px 0 0;color:#5f5a52;font-size:14px;line-height:1.7;">
-                          Gracias por comprar en BSR. Si hay cualquier cambio en el estado del pedido, te avisaremos por correo.
+                          Gracias por comprar en BSR. Adjuntamos tu factura en PDF para que puedas verla, descargarla o guardarla desde tu correo.
                         </p>
                       </div>
                     </div>

@@ -2,7 +2,12 @@ package com.project.controller;
 
 import java.util.List;
 
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -65,6 +70,26 @@ public class OrderController {
     @GetMapping("/me/{id}")
     public ResponseEntity<OrderDTO> myOrderById(@PathVariable Long id, Authentication auth) {
         return ResponseEntity.ok(service.findMyOrderById(id, auth.getName()));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping(value = "/me/{id}/invoice", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<ByteArrayResource> myOrderInvoice(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean download,
+            Authentication auth) {
+        byte[] pdf = service.getMyOrderInvoice(id, auth.getName());
+        String filename = service.getInvoiceFilename(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdf.length);
+        headers.setCacheControl(CacheControl.noStore().getHeaderValue());
+        headers.setContentDisposition(
+                ContentDisposition.builder(download ? "attachment" : "inline")
+                        .filename(filename)
+                        .build());
+
+        return new ResponseEntity<>(new ByteArrayResource(pdf), headers, HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")

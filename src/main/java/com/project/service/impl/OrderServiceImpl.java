@@ -25,6 +25,7 @@ import com.project.repository.CustomerRepository;
 import com.project.repository.OrderDetailRepository;
 import com.project.repository.OrderRepository;
 import com.project.service.EmailService;
+import com.project.service.InvoiceService;
 import com.project.service.OrderService;
 
 import jakarta.transaction.Transactional;
@@ -42,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartItemRepository cartItemRepo;
     private final OrderDetailRepository orderDetailRepo;
     private final EmailService emailService;
+    private final InvoiceService invoiceService;
 
     public OrderServiceImpl(
             OrderRepository repo,
@@ -50,7 +52,8 @@ public class OrderServiceImpl implements OrderService {
             AddressRepository addressRepo,
             CartItemRepository cartItemRepo,
             OrderDetailRepository orderDetailRepo,
-            EmailService emailService) {
+            EmailService emailService,
+            InvoiceService invoiceService) {
         this.repo = repo;
         this.mapper = mapper;
         this.customerRepo = customerRepo;
@@ -58,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
         this.cartItemRepo = cartItemRepo;
         this.orderDetailRepo = orderDetailRepo;
         this.emailService = emailService;
+        this.invoiceService = invoiceService;
     }
 
     @Override
@@ -118,14 +122,17 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDTO findMyOrderById(Long orderId, String email) {
-        OrderEntity order = repo.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return mapper.toDto(getOwnedOrder(orderId, email));
+    }
 
-        if (!order.getCustomer().getEmail().equalsIgnoreCase(email)) {
-            throw new RuntimeException("Access denied");
-        }
+    @Override
+    public byte[] getMyOrderInvoice(Long orderId, String email) {
+        return invoiceService.generateInvoicePdf(getOwnedOrder(orderId, email));
+    }
 
-        return mapper.toDto(order);
+    @Override
+    public String getInvoiceFilename(Long orderId) {
+        return invoiceService.buildInvoiceFilename(orderId);
     }
 
     @Override
@@ -267,5 +274,17 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return mapper.toDto(updatedOrder);
+    }
+
+    private OrderEntity getOwnedOrder(Long orderId, String email) {
+        OrderEntity order = repo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getCustomer().getEmail().equalsIgnoreCase(email)) {
+            throw new RuntimeException("Access denied");
+        }
+
+        order.setOrderDetails(orderDetailRepo.findByOrderId(order.getId()));
+        return order;
     }
 }
